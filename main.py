@@ -436,7 +436,7 @@ def kappa(testData, k):
         P0 += dataMat[i, i] * 1.0
     xsum = np.sum(dataMat, axis=1)
     ysum = np.sum(dataMat, axis=0)
-    Pe = float(ysum * xsum) / (float(np.sum(dataMat)) ** 2)
+    Pe = np.float64(ysum * xsum) / np.float64(np.sum(dataMat) ** 2)
     P0 = float(P0 / np.sum(dataMat) * 1.0)
     cohens_coefficient = float((P0 - Pe) / (1 - Pe))
     return cohens_coefficient
