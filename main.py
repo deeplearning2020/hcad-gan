@@ -44,7 +44,7 @@ parser.add_argument('--clamp_upper', type=float, default=0.01)
 opt = parser.parse_args()
 #opt.dataroot = 'E:/picture/CIFAR10'
 opt.outf = 'model'
-opt.cuda = False
+opt.cuda = True
 print(opt)
 
 CRITIC_ITERS = 1
