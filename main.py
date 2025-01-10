@@ -358,13 +358,11 @@ netG = netG(nz, ngf, nc)
 
 if opt.netG != '':
     netG.load_state_dict(torch.load(opt.netG))
-print(netG)
 
 netD = netD(ndf, nc, nb_label)
 
 if opt.netD != '':
     netD.load_state_dict(torch.load(opt.netD))
-print(netD)
 
 s_criterion = nn.BCELoss()
 c_criterion = nn.NLLLoss()
@@ -438,75 +436,55 @@ for epoch in range(1, opt.niter + 1):
         optimizerD.param_groups[0]['lr'] *= 0.9
         optimizerG.param_groups[0]['lr'] *= 0.9
 
-    for i,datas in enumerate(train_loader):
-        for j in range(2):    ## Update D 10 times for every G epoch
+    for i, datas in enumerate(train_loader):
+        for j in range(2):  # Update D 2 times for every G update
             netD.zero_grad()
             img, label = datas
             batch_size = img.size(0)
+            
+            # Real data training
             input.resize_(img.size()).copy_(img)
             s_label.resize_(batch_size).fill_(real_label)
             c_label.resize_(batch_size).copy_(label)
             c_output = netD(input)
-
-            #s_errD_real = s_criterion(s_output, s_label)
             c_errD_real = c_criterion(c_output, c_label)
-            errD_real =  c_errD_real
+            errD_real = c_errD_real
             errD_real.backward()
             D_x = c_output.data.mean()
 
             correct, length = test(c_output, c_label)
-            #print('real train finished!')
 
-                # train with fake
-
-            noise.resize_(batch_size, nz, 1, 1)
-            noise.normal_(0, 1)
-            noise_ = np.random.normal(0, 1, (batch_size, nz, 1, 1))
-
-            noise.resize_(batch_size, nz, 1, 1).copy_(torch.from_numpy(noise_))
-
-            #label = np.random.randint(0, nb_label, batch_size)
-            label = np.full(batch_size, nb_label)
-
-            f_label.data.resize_(batch_size).copy_(torch.from_numpy(label))
-
+            # Fake data training
+            noise.resize_(batch_size, nz, 1, 1).normal_(0, 1)
+            
+            # Create fake labels of the same batch size
+            fake_labels = np.full(batch_size, nb_label)
+            f_label.resize_(batch_size).copy_(torch.from_numpy(fake_labels))
 
             fake = netG(noise)
-            #s_label.fill_(fake_label)
             c_output = netD(fake.detach())
-            #s_errD_fake = s_criterion(s_output, s_label)
             c_errD_fake = c_criterion(c_output, f_label)
             errD_fake = c_errD_fake
             errD_fake.backward()
             D_G_z1 = c_output.data.mean()
             errD = errD_real + errD_fake
             optimizerD.step()
-            #print('fake train finished!')
-            ###############
-            #  Updata G
-            ##############
 
-
+        # Update G
         netG.zero_grad()
-        #s_label.data.fill_(real_label)  # fake labels are real for generator cost
         c_output = netD(fake)
-        #s_errG = s_criterion(s_output, s_label)
-        c_errG = c_criterion(c_output, c_label)
+        c_errG = c_criterion(c_output, c_label)  # Use real labels for generator training
         errG = c_errG
         errG.backward()
         D_G_z2 = c_output.data.mean()
         optimizerG.step()
         right += correct
-        #print('begin spout!')
 
     if epoch % 5 == 0:
-         print('[%d/%d][%d/%d]   D(x): %.4f D(G(z)): %.4f / %.4f=%.4f,  Accuracy: %.4f / %.4f = %.4f'
-                % (epoch, opt.niter, i, len(train_loader),
-                  D_x, D_G_z1, D_G_z2, D_G_z1 / D_G_z2,
+        print('[%d/%d][%d/%d] D(x): %.4f D(G(z)): %.4f / %.4f=%.4f, Accuracy: %.4f / %.4f = %.4f'
+              % (epoch, opt.niter, i, len(train_loader),
+                 D_x, D_G_z1, D_G_z2, D_G_z1 / D_G_z2,
                  right, len(train_loader.dataset), 100. * right / len(train_loader.dataset)))
-
-        #torch.save(netG.state_dict(), '%s/netG_epoch_%d.pth' % (opt.outf, epoch))
-        #torch.save(netD.state_dict(), '%s/netD_epoch_%d.pth' % (opt.outf, epoch))
     if epoch%5==0:
         netD.eval()
         netG.eval()
