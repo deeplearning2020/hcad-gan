@@ -127,10 +127,10 @@ def flip(data):
 
 
 
-matfn1 = os.path.join(os.getcwd(),'data/Indian_pines_corrected.mat'
+matfn1 = os.path.join(os.getcwd(),'data/Indian_pines_corrected.mat')
 data1 = sio.loadmat(matfn1)
 X = data1['indian_pines_corrected']
-matfn2 = os.path.join(os.getcwd(),'data/Indian_pines_gt'
+matfn2 = os.path.join(os.getcwd(),'data/Indian_pines_gt')
 data2=sio.loadmat(matfn2)
 y = data2['indian_pines_gt']
 test_ratio=0.90
