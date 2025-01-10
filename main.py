@@ -119,7 +119,7 @@ matfn2 = os.path.join(os.getcwd(),'data/Indian_pines_gt')
 data2=sio.loadmat(matfn2)
 y = data2['indian_pines_gt']
 test_ratio=0.90
-patch_size=25
+patch_size=11
 pca_components=3
 print('Hyperspectral data shape:',X.shape)
 print('Label shape:',y.shape)
