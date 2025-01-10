@@ -169,13 +169,13 @@ print('yTrain:',ytrain.shape)
 print('Xtest :',Xtest.shape)
 print('ytest:',ytest.shape)
 
-Xtrain=Xtrain.reshape(-1,patch_size,patch_size,pca_components)
-Xtest=Xtest.reshape(-1,patch_size,patch_size,pca_components)
-print(' before Xtrain shape:',Xtrain.shape)
-print('before Xtest shape:',Xtest.shape)
+Xtrain = Xtrain.reshape(-1, patch_size, patch_size, pca_components)
+Xtest = Xtest.reshape(-1, patch_size, patch_size, pca_components)
 
-Xtrain=Xtrain.transpose(3,2,0,1)
-Xtest=Xtest.transpose(3,2,0,1)
+# Change the transpose to put channels last
+Xtrain = Xtrain.transpose(0, 3, 1, 2)  # (n_samples, channels, height, width)
+Xtest = Xtest.transpose(0, 3, 1, 2)
+
 print('after Xtrain shape:',Xtrain.shape)
 print('after Xtest shape:',Xtest.shape)
 
