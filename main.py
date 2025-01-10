@@ -480,12 +480,12 @@ for epoch in range(1, opt.niter + 1):
         optimizerG.step()
         right += correct
 
-    if epoch % 5 == 0:
+    if epoch % 25 == 0:
         print('[%d/%d][%d/%d] D(x): %.4f D(G(z)): %.4f / %.4f=%.4f, Accuracy: %.4f / %.4f = %.4f'
               % (epoch, opt.niter, i, len(train_loader),
                  D_x, D_G_z1, D_G_z2, D_G_z1 / D_G_z2,
                  right, len(train_loader.dataset), 100. * right / len(train_loader.dataset)))
-    if epoch%5==0:
+    if epoch % 25==0:
         netD.eval()
         netG.eval()
         test_loss = 0
@@ -498,16 +498,6 @@ for epoch in range(1, opt.niter + 1):
                 data, target = data.cuda(), target.cuda()
             with torch.no_grad():
                 data, target = Variable(data), Variable(target)
-            #batch_size = data.size(0)
-            #noise.resize_(batch_size, nz, 1, 1)
-            #noise.normal_(0, 1)
-            #noise_ = np.random.normal(0, 1, (batch_size, nz, 1, 1))
-            #noise.resize_(batch_size, nz, 1, 1).copy_(torch.from_numpy(noise_))
-           
-            #fake=netG(noise)
-            #output = netD(data)
-            #vutils.save_image(data,'%s/real_samples_i_%03d.png' % (opt.outf,epoch))
-            #vutils.save_image(fake,'%s/fake_samples_epoch_%03d.png' % (opt.outf, epoch))
             output = netD(data)
 
             test_loss += c_criterion(output, target).item()
