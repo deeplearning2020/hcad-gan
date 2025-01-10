@@ -159,37 +159,21 @@ Xtrain,Xtest,ytrain,ytest=splitTrainTestSet(X_pca,y,test_ratio)
 print('Xtrain shape:',Xtrain.shape)
 print('Xtest shape:',Xtest.shape)
 
-#nTrain = 1024
-#nTest = nSample-nTrain
-#imdb = {}
-#imdb['datas'] = np.zeros([2 * HalfWidth, 2 * HalfWidth, nBand, nTrain + nTest], dtype=np.float32)
-#imdb['Labels'] = np.zeros([nTrain + nTest], dtype=np.int64)
-#imdb['set'] = np.zeros([nTrain + nTest], dtype=np.int64)
-#for iSample in range(nTrain + nTest):
-#    imdb['datas'][:, :, :, iSample] = data[Row[RandPerm[iSample]] - HalfWidth: Row[RandPerm[iSample]] + HalfWidth,
-#                                     Column[RandPerm[iSample]] - HalfWidth: Column[RandPerm[iSample]] + HalfWidth,
-#                                     :]
-#    imdb['Labels'][iSample] = G[Row[RandPerm[iSample]],
- #                               Column[RandPerm[iSample]]].astype(np.int64)
+
 print('Data is OK.')
 
-#imdb['Labels'] = imdb['Labels'] - 1
 
-#imdb['set'] = np.hstack((np.ones([nTrain]), 3 * np.ones([nTest]))).astype(np.int64)
-#Xtrain=imdb['datas'][:,:,:,:nTrain]
-#ytrain=imdb['Labels'][:nTrain]
 print('Xtrain :',Xtrain.shape)
 print('yTrain:',ytrain.shape)
-#Xtest=imdb['datas']
-#ytest=imdb['Labels']
+
 print('Xtest :',Xtest.shape)
 print('ytest:',ytest.shape)
-"""
+
 Xtrain=Xtrain.reshape(-1,patch_size,patch_size,pca_components)
 Xtest=Xtest.reshape(-1,patch_size,patch_size,pca_components)
 print(' before Xtrain shape:',Xtrain.shape)
 print('before Xtest shape:',Xtest.shape)
-"""
+
 Xtrain=Xtrain.transpose(3,2,0,1)
 Xtest=Xtest.transpose(3,2,0,1)
 print('after Xtrain shape:',Xtrain.shape)
