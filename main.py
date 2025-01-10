@@ -66,21 +66,6 @@ cudnn.benchmark = False
 if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
-"""
-matfn1 = 'E:/matconvnet/matconvnet/Salinas/Salinas_corrected.mat'
-data1 = sio.loadmat(matfn1)
-Sa = data1['salinas_corrected']
-matfn2 = 'E:/matconvnet/matconvnet/Salinas/Salinas_gt.mat'
-data2 = sio.loadmat(matfn2)
-GroundTruth = data2['salinas_gt']
-
-matfn3 = 'E:/matconvnet/matconvnet/Salinas/PC.mat'
-data3 = sio.loadmat(matfn3)
-PCData = data3['PCData']
-
-[nRow, nColumn, nBand] = PCData.shape
-"""
-###PCA变换
 def applyPCA(X,numComponents):
     newX=np.reshape(X,(-1,X.shape[2]))
     pca=PCA(n_components=numComponents,whiten=True)
@@ -173,7 +158,7 @@ Xtrain,Xtest,ytrain,ytest=splitTrainTestSet(X_pca,y,test_ratio)
 print('Xtrain shape:',Xtrain.shape)
 print('Xtest shape:',Xtest.shape)
 """
-nTrain = 2000
+nTrain = 1024
 nTest = nSample-nTrain
 imdb = {}
 imdb['datas'] = np.zeros([2 * HalfWidth, 2 * HalfWidth, nBand, nTrain + nTest], dtype=np.float32)
