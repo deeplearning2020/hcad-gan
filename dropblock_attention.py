@@ -27,19 +27,33 @@ class DropBlock2D(nn.Module):
         # Calculate gamma with safeguards against division by zero
         gamma = (1. - self.keep_prob) / (block_size ** 2)
         for sh in [height, width]:
-            denom = max(1, sh - block_size + 1)  # Ensure denominator is never zero
+            denom = max(1, sh - block_size + 1)
             gamma *= sh / denom
             
         # Create bernoulli mask
         M = torch.bernoulli(torch.ones_like(input) * gamma)
+        
+        # Calculate proper padding to maintain input size
+        pad_size = (block_size - 1) // 2
         
         # Create convolution kernel for block masking
         kernel = torch.ones((input.shape[1], 1, block_size, block_size)).to(
             device=input.device, dtype=input.dtype
         )
         
-        # Apply convolution to create block mask
-        Msum = F.conv2d(M, kernel, padding=block_size // 2, groups=input.shape[1])
+        # Apply convolution with same padding
+        Msum = F.conv2d(
+            M,
+            kernel,
+            padding=pad_size,
+            groups=input.shape[1]
+        )
+        
+        # Ensure Msum has exactly the same size as input
+        if Msum.shape != input.shape:
+            Msum = F.interpolate(Msum, size=(height, width), mode='nearest')
+            
+        # Create final mask
         Msum = (Msum < 1).to(device=input.device, dtype=input.dtype)
         
         # Apply mask and normalization
