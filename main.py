@@ -1,5 +1,6 @@
 
 
+
 from __future__ import print_function
 import argparse
 import os
@@ -22,7 +23,6 @@ import pandas as pd
 from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
 from dropblock_attention import DropBlock2D
-from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=0)
@@ -98,7 +98,7 @@ def createImageCubes(X,y,windowSize=5,removeZeroLabels=True):
 
 
 def splitTrainTestSet(X,y,testRatio,randomState=345):
-    X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=testRatio) 
+    X_train,X_test,y_train,y_test=X*(1-testRatio),X*testRatio,y*(1-testRatio),y*testRatio
     return X_train,X_test,y_train,y_test
 def flip(data):
 
@@ -150,7 +150,7 @@ nSample = np.size(Row)
 RandPerm = np.random.permutation(nSample)
 
 
-
+"""
 X_pca,y=createImageCubes(X_pca,y,windowSize=patch_size)
 
 print('Data cube X shape:',X_pca.shape)
@@ -158,24 +158,40 @@ print('Data cube y shape:',y.shape)
 Xtrain,Xtest,ytrain,ytest=splitTrainTestSet(X_pca,y,test_ratio)
 print('Xtrain shape:',Xtrain.shape)
 print('Xtest shape:',Xtest.shape)
-
-
+"""
+nTrain = 1024
+nTest = nSample-nTrain
+imdb = {}
+imdb['datas'] = np.zeros([2 * HalfWidth, 2 * HalfWidth, nBand, nTrain + nTest], dtype=np.float32)
+imdb['Labels'] = np.zeros([nTrain + nTest], dtype=np.int64)
+imdb['set'] = np.zeros([nTrain + nTest], dtype=np.int64)
+for iSample in range(nTrain + nTest):
+    imdb['datas'][:, :, :, iSample] = data[Row[RandPerm[iSample]] - HalfWidth: Row[RandPerm[iSample]] + HalfWidth,
+                                     Column[RandPerm[iSample]] - HalfWidth: Column[RandPerm[iSample]] + HalfWidth,
+                                     :]
+    imdb['Labels'][iSample] = G[Row[RandPerm[iSample]],
+                                Column[RandPerm[iSample]]].astype(np.int64)
 print('Data is OK.')
 
+imdb['Labels'] = imdb['Labels'] - 1
 
+imdb['set'] = np.hstack((np.ones([nTrain]), 3 * np.ones([nTest]))).astype(np.int64)
+Xtrain=imdb['datas'][:,:,:,:nTrain]
+ytrain=imdb['Labels'][:nTrain]
 print('Xtrain :',Xtrain.shape)
 print('yTrain:',ytrain.shape)
-
+Xtest=imdb['datas']
+ytest=imdb['Labels']
 print('Xtest :',Xtest.shape)
 print('ytest:',ytest.shape)
-
-Xtrain = Xtrain.reshape(-1, patch_size, patch_size, pca_components)
-Xtest = Xtest.reshape(-1, patch_size, patch_size, pca_components)
-
-# Change the transpose to put channels last
-Xtrain = Xtrain.transpose(0, 3, 1, 2)  # (n_samples, channels, height, width)
-Xtest = Xtest.transpose(0, 3, 1, 2)
-
+"""
+Xtrain=Xtrain.reshape(-1,patch_size,patch_size,pca_components)
+Xtest=Xtest.reshape(-1,patch_size,patch_size,pca_components)
+print(' before Xtrain shape:',Xtrain.shape)
+print('before Xtest shape:',Xtest.shape)
+"""
+Xtrain=Xtrain.transpose(3,2,0,1)
+Xtest=Xtest.transpose(3,2,0,1)
 print('after Xtrain shape:',Xtrain.shape)
 print('after Xtest shape:',Xtest.shape)
 
@@ -246,22 +262,21 @@ class netG(nn.Module):
         super(netG, self).__init__()
         self.ReLU = nn.LeakyReLU(0.2, inplace=True)
         self.Tanh = nn.Tanh()
-        
-        # Starting from 1x1
-        self.conv1 = nn.ConvTranspose2d(nz, ngf * 8, 3, 1, 0, bias=False)  # 3x3
+        self.conv1 = nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False)
         self.BatchNorm1 = nn.BatchNorm2d(ngf * 8)
 
-        self.conv2 = nn.ConvTranspose2d(ngf * 8, ngf * 4, 3, 2, 1, bias=False)  # 5x5
+        self.conv2 = nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False)
         self.BatchNorm2 = nn.BatchNorm2d(ngf * 4)
+        #self.Drop2 = nn.Dropout2d(p=0.5)
         self.Drop2 = DropBlock2D()
 
-        self.conv3 = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 1, 1, bias=False)  # 5x5
+        self.conv3 = nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False)
         self.BatchNorm3 = nn.BatchNorm2d(ngf * 2)
 
-        self.conv4 = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, bias=False)  # 9x9
+        self.conv4 = nn.ConvTranspose2d(ngf * 2, ngf, 4, 2, 1, bias=False)
         self.BatchNorm4 = nn.BatchNorm2d(ngf)
 
-        self.conv6 = nn.ConvTranspose2d(ngf, nc, 3, 1, 1, bias=False)  # 11x11
+        self.conv6 = nn.ConvTranspose2d(ngf, nc, 4, 2, 1, bias=False)
 
         self.apply(weights_init)
 
@@ -282,7 +297,6 @@ class netG(nn.Module):
         x = self.conv4(x)
         x = self.BatchNorm4(x)
         x = self.ReLU(x)
-        
         x = self.conv6(x)
         output = self.Tanh(x)
         return output
@@ -293,27 +307,26 @@ class netD(nn.Module):
         super(netD, self).__init__()
         self.LeakyReLU = nn.LeakyReLU(0.2, inplace=True)
 
-        # Input: 11x11
-        self.conv1 = nn.Conv2d(nc, ndf, 3, 2, 1, bias=False)  # 6x6
+        self.conv1 = nn.Conv2d(nc, ndf, 4, 2, 1, bias=False)
         self.BatchNorm1 = nn.BatchNorm2d(ndf)
-        
-        self.conv2 = nn.Conv2d(ndf, ndf * 2, 3, 1, 1, bias=False)  # 6x6
+        self.conv2 = nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False)
         self.BatchNorm2 = nn.BatchNorm2d(ndf * 2)
+        #self.Drop2 = nn.Dropout2d(p=0.5)
         self.Drop2 = DropBlock2D()
-        
-        self.conv3 = nn.Conv2d(ndf * 2, ndf * 4, 3, 2, 1, bias=False)  # 3x3
+        self.conv3 = nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False)
         self.BatchNorm3 = nn.BatchNorm2d(ndf * 4)
-        
-        self.conv4 = nn.Conv2d(ndf * 4, ndf * 8, 3, 1, 0, bias=False)  # 1x1
+        self.conv4 = nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False)
         self.BatchNorm4 = nn.BatchNorm2d(ndf * 8)
-        
-        self.conv5 = nn.Conv2d(ndf * 8, ndf * 2, 1, 1, 0, bias=False)  # 1x1
+        self.conv5 = nn.Conv2d(ndf * 8, ndf * 2, 4, 1, 0, bias=False)
+        #self.disc_linear = nn.Linear(ndf * 2, 1)
         self.aux_linear = nn.Linear(ndf * 2, nb_label+1)
         self.softmax = nn.LogSoftmax(dim=-1)
+        #self.sigmoid = nn.Sigmoid()
         self.ndf = ndf
         self.apply(weights_init)
 
     def forward(self, input):
+
         x = self.conv1(input)
         x = self.LeakyReLU(x)
 
@@ -335,6 +348,8 @@ class netD(nn.Module):
         x = x.view(-1, self.ndf * 2)
         c = self.aux_linear(x)
         c = self.softmax(c)
+        #s = self.disc_linear(x).squeeze()
+        #s = self.sigmoid(s)
         return c
 
 
@@ -507,3 +522,4 @@ for epoch in range(1, opt.niter + 1):
         AA_ACC = np.diag(C) / np.sum(C, 1)
         AA = np.mean(AA_ACC, 0)
         print('OA= %.5f AA= %.5f k= %.5f' % (acc, AA, k))
+
