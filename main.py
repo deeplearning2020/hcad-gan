@@ -22,6 +22,7 @@ import pandas as pd
 from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
 from dropblock_attention import DropBlock2D
+from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=0)
@@ -97,7 +98,7 @@ def createImageCubes(X,y,windowSize=5,removeZeroLabels=True):
 
 
 def splitTrainTestSet(X,y,testRatio,randomState=345):
-    X_train,X_test,y_train,y_test=X*(1-testRatio),X*testRatio,y*(1-testRatio),y*testRatio
+    X_train,X_test,y_train,y_test = train_test_split(X, y, test_size=testRatio) 
     return X_train,X_test,y_train,y_test
 def flip(data):
 
@@ -149,7 +150,7 @@ nSample = np.size(Row)
 RandPerm = np.random.permutation(nSample)
 
 
-"""
+
 X_pca,y=createImageCubes(X_pca,y,windowSize=patch_size)
 
 print('Data cube X shape:',X_pca.shape)
@@ -157,30 +158,30 @@ print('Data cube y shape:',y.shape)
 Xtrain,Xtest,ytrain,ytest=splitTrainTestSet(X_pca,y,test_ratio)
 print('Xtrain shape:',Xtrain.shape)
 print('Xtest shape:',Xtest.shape)
-"""
-nTrain = 1024
-nTest = nSample-nTrain
-imdb = {}
-imdb['datas'] = np.zeros([2 * HalfWidth, 2 * HalfWidth, nBand, nTrain + nTest], dtype=np.float32)
-imdb['Labels'] = np.zeros([nTrain + nTest], dtype=np.int64)
-imdb['set'] = np.zeros([nTrain + nTest], dtype=np.int64)
-for iSample in range(nTrain + nTest):
-    imdb['datas'][:, :, :, iSample] = data[Row[RandPerm[iSample]] - HalfWidth: Row[RandPerm[iSample]] + HalfWidth,
-                                     Column[RandPerm[iSample]] - HalfWidth: Column[RandPerm[iSample]] + HalfWidth,
-                                     :]
-    imdb['Labels'][iSample] = G[Row[RandPerm[iSample]],
-                                Column[RandPerm[iSample]]].astype(np.int64)
+
+#nTrain = 1024
+#nTest = nSample-nTrain
+#imdb = {}
+#imdb['datas'] = np.zeros([2 * HalfWidth, 2 * HalfWidth, nBand, nTrain + nTest], dtype=np.float32)
+#imdb['Labels'] = np.zeros([nTrain + nTest], dtype=np.int64)
+#imdb['set'] = np.zeros([nTrain + nTest], dtype=np.int64)
+#for iSample in range(nTrain + nTest):
+#    imdb['datas'][:, :, :, iSample] = data[Row[RandPerm[iSample]] - HalfWidth: Row[RandPerm[iSample]] + HalfWidth,
+#                                     Column[RandPerm[iSample]] - HalfWidth: Column[RandPerm[iSample]] + HalfWidth,
+#                                     :]
+#    imdb['Labels'][iSample] = G[Row[RandPerm[iSample]],
+ #                               Column[RandPerm[iSample]]].astype(np.int64)
 print('Data is OK.')
 
-imdb['Labels'] = imdb['Labels'] - 1
+#imdb['Labels'] = imdb['Labels'] - 1
 
-imdb['set'] = np.hstack((np.ones([nTrain]), 3 * np.ones([nTest]))).astype(np.int64)
-Xtrain=imdb['datas'][:,:,:,:nTrain]
-ytrain=imdb['Labels'][:nTrain]
+#imdb['set'] = np.hstack((np.ones([nTrain]), 3 * np.ones([nTest]))).astype(np.int64)
+#Xtrain=imdb['datas'][:,:,:,:nTrain]
+#ytrain=imdb['Labels'][:nTrain]
 print('Xtrain :',Xtrain.shape)
 print('yTrain:',ytrain.shape)
-Xtest=imdb['datas']
-ytest=imdb['Labels']
+#Xtest=imdb['datas']
+#ytest=imdb['Labels']
 print('Xtest :',Xtest.shape)
 print('ytest:',ytest.shape)
 """
