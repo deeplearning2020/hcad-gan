@@ -560,8 +560,8 @@ for epoch in range(1, opt.niter + 1):
         if acc > best_acc:
             best_acc = acc
 
-        #C = confusion_matrix(target.data.cpu().numpy(), pred.cpu().numpy())
-        C = confusion_matrix(all_target, all_Label)
+        C = confusion_matrix(target.data.cpu().numpy(), pred.cpu().numpy())
+        #C = confusion_matrix(all_target, all_Label)
         C = C[:num_class,:num_class]
         np.save('c.npy', C)
         k = kappa(C, np.shape(C)[0])
