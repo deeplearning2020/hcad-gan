@@ -519,7 +519,7 @@ for epoch in range(1, opt.niter + 1):
         C = C[:num_class,:num_class]
         np.save('c.npy', C)
         k = kappa(C, np.shape(C)[0])
-        AA_ACC = np.diag(C) / np.sum(C, 1)
+        AA_ACC = np.float64(np.diag(C)) / np.float(np.sum(C, 1))
         AA = np.mean(AA_ACC, 0)
         print('OA= %.5f AA= %.5f k= %.5f' % (acc, AA, k))
 
